@@ -15,4 +15,11 @@ def send_verification_email(user_id, email):
     message = f'Please click the link below to verify your email:\n\n{verify_url}'
     from_email = settings.DEFAULT_FROM_EMAIL
     
-    send_mail(subject, message, from_email, [email])
+    # In Django 6.0, fail_silently must be passed as a keyword argument
+    send_mail(
+        subject, 
+        message, 
+        from_email, 
+        [email], 
+        fail_silently=False
+    )

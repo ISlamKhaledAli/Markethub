@@ -4,6 +4,9 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.utils.translation import gettext_lazy as _
 
 class UserManager(BaseUserManager):
+    def get_by_natural_key(self, username):
+        return self.get(**{self.model.USERNAME_FIELD + '__iexact': username})
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError(_('The Email field must be set'))
