@@ -8,7 +8,8 @@ from .views import (
     VerifyEmailView, 
     ResendVerificationView,
     AdminUserListView,
-    AdminUserActivateView
+    AdminUserActivateView,
+    GoogleLoginView
 )
 
 urlpatterns = [
@@ -20,6 +21,7 @@ urlpatterns = [
     path('auth/me/', UserMeView.as_view(), name='me'),
     path('auth/verify-email/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),
     path('auth/resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),
+    path('auth/google/', GoogleLoginView.as_view(), name='google_login'),
     
     # Admin
     path('admin/users/', AdminUserListView.as_view(), name='admin_user_list'),
