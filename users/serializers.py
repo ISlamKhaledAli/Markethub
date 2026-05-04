@@ -24,33 +24,45 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True, required=True)
-    store_name = serializers.CharField(required=False)  # For sellers
+    store_name = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = User
         fields = ('id', 'email', 'phone', 'role', 'password', 'password_confirm', 'store_name')
 
     def validate(self, attrs):
+        role = attrs.get('role', 'customer')
+        store_name = attrs.get('store_name')
+
+        # 1. Password confirmation check
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
+
+        # 2. store_name logic based on role
+        if role == 'seller':
+            if not store_name or store_name.strip() == "":
+                raise serializers.ValidationError({"store_name": "Store name is required for seller accounts."})
+        else:
+            # Clear store_name for non-sellers to ignore any input
+            attrs['store_name'] = None
+            
         return attrs
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         store_name = validated_data.pop('store_name', None)
+        role = validated_data.get('role', 'customer')
         
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             phone=validated_data.get('phone'),
-            role=validated_data.get('role', 'customer')
+            role=role
         )
 
-        if user.role == 'seller' and store_name:
+        # 3. Create SellerProfile only for sellers
+        if role == 'seller' and store_name:
             SellerProfile.objects.create(user=user, store_name=store_name)
-        elif user.role == 'seller' and not store_name:
-            # If seller but no store name, maybe use email or generic
-            SellerProfile.objects.create(user=user, store_name=f"{user.email.split('@')[0]}'s Store")
             
         return user
 
