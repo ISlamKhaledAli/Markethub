@@ -8,7 +8,7 @@ urlpatterns = [
     path('api/', include('users.urls')),
     
     # Optional: allauth urls if using social login
-    path('accounts/', include('allauth.urls')),
+    # path('accounts/', include('allauth.urls')),
 ]
 
 if settings.DEBUG:

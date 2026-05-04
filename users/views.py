@@ -1,9 +1,12 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
 from rest_framework import status, generics, permissions, views
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 from .serializers import (
     RegisterSerializer, 
@@ -147,3 +150,52 @@ class AdminUserActivateView(ApiResponseMixin, views.APIView):
             return self.success_response(message=f"User {status_msg} successfully")
         except User.DoesNotExist:
             return self.error_response(message="User not found", status_code=status.HTTP_404_NOT_FOUND)
+
+class GoogleLoginView(ApiResponseMixin, views.APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        # Support both 'token' and 'id_token' keys for flexibility
+        token = request.data.get('token') or request.data.get('id_token')
+        if not token:
+            return self.error_response(message="Google token is required")
+
+        try:
+            # Verify the ID token
+            idinfo = id_token.verify_oauth2_token(
+                token, 
+                google_requests.Request(), 
+                settings.GOOGLE_CLIENT_ID
+            )
+
+            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+                raise ValueError('Wrong issuer.')
+
+            email = idinfo['email']
+            
+            # Get or create user
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    'role': 'customer',
+                    'is_verified': True, # Google emails are already verified
+                }
+            )
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            
+            return self.success_response(data={
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': {
+                    'email': user.email,
+                    'role': user.role,
+                    'is_new': created
+                }
+            }, message="Google login successful")
+
+        except ValueError as e:
+            return self.error_response(message=f"Invalid Google token: {str(e)}")
+        except Exception as e:
+            return self.error_response(message=f"Google authentication failed: {str(e)}")
