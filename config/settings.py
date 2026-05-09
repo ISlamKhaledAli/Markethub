@@ -170,6 +170,8 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # CORS Settings
 # CORS_ALLOW_ALL_ORIGINS = True  # In production, specify origins
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
     env('FRONTEND_URL', default="http://localhost:3000"),
 ]
 
