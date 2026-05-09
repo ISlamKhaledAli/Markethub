@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { MainLayoutComponent } from './core/layouts/main-layout/main-layout';
+import { roleGuard } from './core/guards/role-guard';
 
 export const routes: Routes = [
   {
@@ -6,8 +8,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'login',
-        loadComponent: () =>
-          import('./features/auth/login/login').then((m) => m.LoginComponent),
+        loadComponent: () => import('./features/auth/login/login').then((m) => m.LoginComponent),
       },
       {
         path: 'register',
@@ -19,8 +20,21 @@ export const routes: Routes = [
   },
   {
     path: '',
-    loadComponent: () =>
-      import('./features/auth/login/login').then((m) => m.LoginComponent),
+    component: MainLayoutComponent,
+    children: [],
   },
-  { path: '**', redirectTo: 'auth/login' },
+  {
+    path: 'seller',
+    canActivate: [roleGuard(['seller', 'admin'])],
+    loadComponent: () =>
+      import('./features/auth/login/login').then((m) => m.LoginComponent), // مؤقتاً حتى نبنيها
+  },
+  {
+    path: 'admin',
+    canActivate: [roleGuard(['admin'])],
+    loadComponent: () => import('./features/auth/login/login').then(m => m.LoginComponent) // مؤقتاً حتى نبنيها
+  },
+
+  // Fallback Route
+  { path: '**', redirectTo: '' }
 ];
