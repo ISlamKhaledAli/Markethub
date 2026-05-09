@@ -8,13 +8,13 @@
         The premier destination for modern commerce, bridging high-trust quality with frictionless digital experiences.
       </p>
       <div class="flex gap-4">
-        <a href="#" class="text-slate-400 hover:text-primary transition-colors">
+        <a (click)="showComingSoon('Social')" class="text-slate-400 hover:text-primary transition-colors cursor-pointer">
           <span class="material-symbols-outlined">public</span>
         </a>
-        <a href="#" class="text-slate-400 hover:text-primary transition-colors">
+        <a (click)="showComingSoon('Social')" class="text-slate-400 hover:text-primary transition-colors cursor-pointer">
           <span class="material-symbols-outlined">share</span>
         </a>
-        <a href="#" class="text-slate-400 hover:text-primary transition-colors">
+        <a (click)="showComingSoon('Contact')" class="text-slate-400 hover:text-primary transition-colors cursor-pointer">
           <span class="material-symbols-outlined">mail</span>
         </a>
       </div>
@@ -51,10 +51,10 @@
     <div class="space-y-4">
       <h4 class="font-bold text-on-surface dark:text-white text-xs uppercase tracking-wider">Help</h4>
       <ul class="space-y-2">
-        <li><a href="#" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">Privacy Policy</a></li>
-        <li><a href="#" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">Terms of Service</a></li>
-        <li><a href="#" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">Shipping Info</a></li>
-        <li><a href="#" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">Returns</a></li>
+        <li><a (click)="showComingSoon('Privacy Policy')" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Privacy Policy</a></li>
+        <li><a (click)="showComingSoon('Terms of Service')" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Terms of Service</a></li>
+        <li><a (click)="showComingSoon('Shipping Info')" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Shipping Info</a></li>
+        <li><a (click)="showComingSoon('Returns')" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Returns</a></li>
       </ul>
     </div>
 

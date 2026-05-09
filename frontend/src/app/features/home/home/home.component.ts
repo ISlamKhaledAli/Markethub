@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Observable, catchError, map, of, finalize } from 'rxjs';
@@ -7,6 +7,7 @@ import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
+import { UiService } from '../../../core/services/ui.service';
 
 interface Banner {
   title: string;
@@ -26,6 +27,10 @@ interface Banner {
   styleUrl: './home.component.scss',
 })
 export class HomeComponent implements OnInit {
+  private productService = inject(ProductService);
+  private categoryService = inject(CategoryService);
+  private uiService = inject(UiService);
+
   categories$: Observable<Category[]> = of([]);
   featuredProducts$: Observable<Product[]> = of([]);
   isLoading = true;
@@ -34,7 +39,7 @@ export class HomeComponent implements OnInit {
   banners: Banner[] = [
     {
       title: 'Defining the New Standard.',
-      subtitle: 'Summer Collection 2024',
+      subtitle: 'Summer Collection 2026',
       description: 'Discover our curated arrivals designed for modern living. Precision-crafted essentials that bridge the gap between utility and luxury.',
       image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDziO1l-bCgTE_FnyHagml6xf9Nj1xt_KP2AL33Rs57k_FgHm05gyUIdk6Vck6IdDOAEuS0qvMzRF_FQBWbvqFFiPvJn0ln74bvAcXaoeKZnJxKh6v5PZtedJ6TK8Lho462creZUryz1VqCI4NT2s2OQG4BTmlVsKEzybivG2hWNh9xk-TvxhBiByFY_ictSJ9NGipNlTwm5UhgN6TrMg6LpaiR_WtS1E20fxN_6RWp3hFmKYEtnMJcigfdH0fQ7__XrX5ONdgasQ4',
       badge: 'New Arrivals',
@@ -42,11 +47,6 @@ export class HomeComponent implements OnInit {
       link: '/catalog'
     }
   ];
-
-  constructor(
-    private productService: ProductService,
-    private categoryService: CategoryService
-  ) {}
 
   ngOnInit(): void {
     this.loadData();
@@ -76,8 +76,11 @@ export class HomeComponent implements OnInit {
 
   addToCart(event: Event, product: Product): void {
     event.stopPropagation(); // prevent card navigation
-    // TODO: integrate CartService
-    console.log('Add to cart:', product.slug);
+    this.uiService.showComingSoon('Cart');
+  }
+
+  showComingSoon(feature: string): void {
+    this.uiService.showComingSoon(feature);
   }
 
   isNew(dateString: string): boolean {

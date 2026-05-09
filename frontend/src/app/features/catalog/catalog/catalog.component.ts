@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,6 +9,7 @@ import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
+import { UiService } from '../../../core/services/ui.service';
 
 @Component({
   selector: 'app-catalog',
@@ -18,6 +19,12 @@ import { Category } from '../../../core/models/category.model';
   styleUrl: './catalog.component.scss',
 })
 export class CatalogComponent implements OnInit, OnDestroy {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private productService = inject(ProductService);
+  private categoryService = inject(CategoryService);
+  private uiService = inject(UiService);
+
   // Filter state
   searchTerm = '';
   selectedCategory: string | null = null;
@@ -43,13 +50,6 @@ export class CatalogComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private routeSub!: Subscription;
   private searchSub!: Subscription;
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private productService: ProductService,
-    private categoryService: CategoryService
-  ) {}
 
   ngOnInit(): void {
     this.fetchCategories();
@@ -104,7 +104,6 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
     this.productService.getProducts(params).subscribe({
       next: (res: any) => {
-        // Assuming API returns array directly. If it returns {results: ...}, adjust here.
         const newProducts = Array.isArray(res) ? res : (res.results || []);
         
         if (this.page === 1) {
@@ -157,6 +156,10 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
   loadMore(): void {
     this.updateUrlParams({ page: this.page + 1 });
+  }
+
+  showComingSoon(feature: string): void {
+    this.uiService.showComingSoon(feature);
   }
 
   private updateUrlParams(params: any): void {

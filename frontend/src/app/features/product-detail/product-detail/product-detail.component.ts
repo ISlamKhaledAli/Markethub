@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -7,6 +7,7 @@ import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
+import { UiService } from '../../../core/services/ui.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -16,6 +17,11 @@ import { Category } from '../../../core/models/category.model';
   styleUrl: './product-detail.component.scss',
 })
 export class ProductDetailComponent implements OnInit, OnDestroy {
+  private route = inject(ActivatedRoute);
+  private productService = inject(ProductService);
+  private categoryService = inject(CategoryService);
+  private uiService = inject(UiService);
+
   product: Product | null = null;
   relatedProducts: Product[] = [];
   quantity = 1;
@@ -28,12 +34,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   notFound = false;
 
   private routeSub!: Subscription;
-
-  constructor(
-    private route: ActivatedRoute,
-    private productService: ProductService,
-    private categoryService: CategoryService
-  ) {}
 
   ngOnInit(): void {
     this.routeSub = this.route.paramMap.subscribe(params => {
@@ -120,7 +120,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   addToCart(): void {
-    // TODO: Integrate with CartService in a future task
-    console.log(`Added ${this.quantity}x ${this.product?.name} to cart`);
+    this.uiService.showComingSoon('Cart');
   }
 }

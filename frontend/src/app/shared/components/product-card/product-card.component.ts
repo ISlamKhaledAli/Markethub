@@ -1,7 +1,8 @@
-import { Component, Input, HostBinding } from '@angular/core';
+import { Component, Input, HostBinding, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../../core/models/product.model';
+import { UiService } from '../../../core/services/ui.service';
 
 @Component({
   selector: 'app-product-card',
@@ -12,6 +13,7 @@ import { Product } from '../../../core/models/product.model';
 })
 export class ProductCardComponent {
   @Input({ required: true }) product!: Product;
+  private uiService = inject(UiService);
 
   @HostBinding('class') get hostClasses() {
     return 'block cursor-pointer group';
@@ -27,5 +29,15 @@ export class ProductCardComponent {
       this.product.discount_price &&
       parseFloat(this.product.discount_price) < parseFloat(this.product.price)
     );
+  }
+
+  addToCart(event: Event): void {
+    event.stopPropagation();
+    this.uiService.showComingSoon('Cart');
+  }
+
+  toggleWishlist(event: Event): void {
+    event.stopPropagation();
+    this.uiService.showComingSoon('Wishlist');
   }
 }

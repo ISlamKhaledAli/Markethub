@@ -22,7 +22,7 @@
             <button [routerLink]="banner.link" class="bg-primary text-on-primary px-8 py-4 rounded-lg font-label-md hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
               {{ banner.ctaText }}
             </button>
-            <button href="#" class="bg-white border border-outline text-on-surface px-8 py-4 rounded-lg font-label-md hover:bg-surface transition-all active:scale-95">
+            <button (click)="showComingSoon('Lookbook')" class="bg-white border border-outline text-on-surface px-8 py-4 rounded-lg font-label-md hover:bg-surface transition-all active:scale-95">
               View Lookbook
             </button>
           </div>

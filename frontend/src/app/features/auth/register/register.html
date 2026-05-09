@@ -18,7 +18,7 @@
           {{ successMessage() }}
         </div>
 
-        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-3">
+        <div [formGroup]="registerForm" class="flex flex-col gap-3">
 
           <div class="flex gap-4 w-full">
             <mat-form-field appearance="outline" class="w-full">
@@ -32,28 +32,28 @@
 
           <mat-form-field appearance="outline" class="w-full" *ngIf="isSeller()">
             <mat-label>Store Name</mat-label>
-            <input matInput formControlName="store_name" placeholder="e.g. Nexus Electronics">
+            <input matInput formControlName="store_name" placeholder="e.g. Nexus Electronics" (keydown.enter)="onSubmit()">
             <mat-icon matPrefix class="mr-2 text-slate-400">storefront</mat-icon>
             <mat-error *ngIf="registerForm.get('store_name')?.hasError('required')">Store name is required for sellers</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Email Address</mat-label>
-            <input matInput type="email" formControlName="email">
+            <input matInput type="email" formControlName="email" (keydown.enter)="onSubmit()">
             <mat-error *ngIf="registerForm.get('email')?.hasError('required')">Email is required</mat-error>
             <mat-error *ngIf="registerForm.get('email')?.hasError('email')">Invalid email format</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Phone Number (Optional)</mat-label>
-            <input matInput type="tel" formControlName="phone">
+            <input matInput type="tel" formControlName="phone" (keydown.enter)="onSubmit()">
             <mat-error *ngIf="registerForm.get('phone')?.hasError('pattern')">Invalid phone number</mat-error>
           </mat-form-field>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Password</mat-label>
-              <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password">
+              <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password" (keydown.enter)="onSubmit()">
               <button mat-icon-button matSuffix (click)="hidePassword.set(!hidePassword())" type="button" tabindex="-1">
                 <mat-icon>{{hidePassword() ? 'visibility_off' : 'visibility'}}</mat-icon>
               </button>
@@ -62,16 +62,16 @@
 
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Confirm Password</mat-label>
-              <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password_confirm">
+              <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password_confirm" (keydown.enter)="onSubmit()">
               <mat-error *ngIf="registerForm.get('password_confirm')?.hasError('passwordMismatch')">Passwords do not match</mat-error>
             </mat-form-field>
           </div>
 
-          <button mat-flat-button color="primary" type="submit" class="!py-6 !text-base !rounded-lg mt-2" [disabled]="isLoading() || successMessage()">
+          <button mat-flat-button color="primary" (click)="onSubmit()" class="!py-6 !text-base !rounded-lg mt-2" [disabled]="isLoading() || successMessage()">
             <span *ngIf="!isLoading()">Create Account</span>
             <mat-spinner *ngIf="isLoading()" diameter="24" color="accent"></mat-spinner>
           </button>
-        </form>
+        </div>
 
         <p class="text-center text-sm text-slate-500 mt-6">
           Already have an account? <a routerLink="/auth/login" class="text-indigo-600 font-semibold hover:underline">Sign in</a>

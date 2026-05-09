@@ -156,7 +156,7 @@
         <div class="space-y-3">
           @for (rating of [5, 4, 3, 2, 1]; track rating) {
             <label class="flex items-center gap-3 cursor-pointer group">
-              <input type="radio" name="rating" [value]="rating" class="w-4 h-4 text-primary focus:ring-primary/50 cursor-pointer">
+              <input (change)="showComingSoon('Rating Filter')" type="radio" name="rating" [value]="rating" class="w-4 h-4 text-primary focus:ring-primary/50 cursor-pointer">
               <div class="flex items-center text-amber-400">
                 @for (star of [1,2,3,4,5]; track star) {
                   <span class="material-symbols-outlined !text-base" [class.fill-1]="star <= rating">
@@ -216,7 +216,7 @@
           @for (product of products; track product.id) {
             <div class="flex gap-6 p-4 border border-surface-container-high rounded-xl hover:shadow-md transition-shadow group">
               <!-- Image -->
-              <div class="w-48 aspect-[4/5] flex-shrink-0 rounded-lg overflow-hidden relative bg-surface-container">
+              <div [routerLink]="['/products', product.slug]" class="w-48 aspect-[4/5] flex-shrink-0 rounded-lg overflow-hidden relative bg-surface-container cursor-pointer">
                 <img 
                   [src]="product.images[0]?.image || 'assets/images/placeholder.png'" 
                   [alt]="product.name"
@@ -228,7 +228,7 @@
               <div class="flex-1 flex flex-col justify-between py-2">
                 <div>
                   <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-xl font-bold text-on-surface">{{ product.name }}</h3>
+                    <h3 [routerLink]="['/products', product.slug]" class="text-xl font-bold text-on-surface cursor-pointer hover:text-primary transition-colors">{{ product.name }}</h3>
                     <div class="text-right">
                       @if (product.discount_price && +product.discount_price < +product.price) {
                         <p class="text-primary font-bold text-lg">{{ product.discount_price | currency }}</p>
@@ -247,8 +247,8 @@
                       <span class="material-symbols-outlined !text-sm fill-1">star</span>
                       <span class="material-symbols-outlined !text-sm">star_half</span>
                     </div>
-                    <span class="text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
-                      In Stock
+                    <span [class.bg-emerald-100]="product.stock > 0" [class.text-emerald-800]="product.stock > 0" [class.bg-red-100]="product.stock === 0" [class.text-red-800]="product.stock === 0" class="text-xs px-2 py-0.5 rounded">
+                      {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
                     </span>
                   </div>
 
@@ -258,11 +258,11 @@
                 </div>
 
                 <div class="flex items-center gap-4 mt-6">
-                  <button class="bg-primary text-on-primary px-8 py-3 rounded-lg font-label-md hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20 flex items-center gap-2">
+                  <button (click)="showComingSoon('Cart')" [disabled]="product.stock === 0" class="bg-primary text-on-primary px-8 py-3 rounded-lg font-label-md hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <span class="material-symbols-outlined text-sm">shopping_cart</span>
                     Add to Cart
                   </button>
-                  <button class="p-3 rounded-lg border border-outline text-on-surface-variant hover:text-primary hover:border-primary transition-colors">
+                  <button (click)="showComingSoon('Wishlist')" class="p-3 rounded-lg border border-outline text-on-surface-variant hover:text-primary hover:border-primary transition-colors">
                     <span class="material-symbols-outlined">favorite</span>
                   </button>
                 </div>

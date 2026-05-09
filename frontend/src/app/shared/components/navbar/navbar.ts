@@ -7,9 +7,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { AuthService } from '../../../core/services/auth';
 import { MatDividerModule } from '@angular/material/divider';
+import { SearchBarComponent } from '../search-bar/search-bar.component';
+import { UiService } from '../../../core/services/ui.service';
 
 @Component({
   selector: 'app-navbar',
+  standalone: true,
   imports: [
     CommonModule,
     RouterLink,
@@ -19,12 +22,14 @@ import { MatDividerModule } from '@angular/material/divider';
     MatMenuModule,
     MatBadgeModule,
     MatDividerModule,
+    SearchBarComponent,
   ],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })
 export class NavbarComponent {
   authService = inject(AuthService);
+  private uiService = inject(UiService);
 
   isAuthenticated = this.authService.isAuthenticated;
   currentUser = this.authService.currentUser;
@@ -36,5 +41,9 @@ export class NavbarComponent {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  showComingSoon(feature: string): void {
+    this.uiService.showComingSoon(feature);
   }
 }

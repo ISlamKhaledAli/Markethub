@@ -16,17 +16,17 @@
           {{ errorMessage() }}
         </div>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+        <div [formGroup]="loginForm" class="flex flex-col gap-4">
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Email Address</mat-label>
-            <input matInput type="email" formControlName="email" placeholder="name@company.com">
+            <input matInput type="email" formControlName="email" placeholder="name@company.com" (keydown.enter)="onSubmit()">
             <mat-error *ngIf="loginForm.get('email')?.hasError('required')">Email is required</mat-error>
             <mat-error *ngIf="loginForm.get('email')?.hasError('email')">Please enter a valid email</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Password</mat-label>
-            <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password">
+            <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password" (keydown.enter)="onSubmit()">
             <button mat-icon-button matSuffix (click)="hidePassword.set(!hidePassword())" type="button">
               <mat-icon>{{hidePassword() ? 'visibility_off' : 'visibility'}}</mat-icon>
             </button>
@@ -37,11 +37,11 @@
             <a routerLink="/auth/forgot-password" class="text-sm text-indigo-600 hover:underline font-medium">Forgot Password?</a>
           </div>
 
-          <button mat-flat-button color="primary" type="submit" class="!py-6 !text-base !rounded-lg" [disabled]="isLoading()">
+          <button mat-flat-button color="primary" (click)="onSubmit()" class="!py-6 !text-base !rounded-lg" [disabled]="isLoading()">
             <span *ngIf="!isLoading()">Sign In to Nexus</span>
             <mat-spinner *ngIf="isLoading()" diameter="24" color="accent"></mat-spinner>
           </button>
-        </form>
+        </div>
 
         <p class="text-center text-sm text-slate-500 mt-6">
           Don't have an account? <a routerLink="/auth/register" class="text-indigo-600 font-semibold hover:underline">Sign up</a>
