@@ -1,8 +1,11 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, filters, status
+from rest_framework.response import Response
 from django.db.models import QuerySet
-from .models import Category
-from .serializers import CategorySerializer
-from .permissions import IsAdminOrReadOnly
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import Category, Product
+from .serializers import CategorySerializer, ProductSerializer
+from .permissions import IsAdminOrReadOnly, IsSellerOwnerOrAdmin
+from .filters import ProductFilter
 
 # Create your views here.
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -15,3 +18,28 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[Category]:
         return super().get_queryset().prefetch_related('subcategories')
+
+class ProductViewSet(viewsets.ModelViewSet):
+    serializer_class = ProductSerializer
+    permission_classes = [IsSellerOwnerOrAdmin]
+    lookup_field = 'slug'
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    ordering_fields = ['price', 'created_at']
+    def get_queryset(self) -> QuerySet[Product]:
+        queryset = Product.objects.select_related('seller','category').prefetch_related('images').filter(is_active=True)
+
+        search_query = self.request.query_params.get('search', None)
+        if search_query:
+            queryset = queryset.extra(
+                where=['MATCH(name, description) AGAINST (%s IN BOOLEAN MODE)'],
+                params=[f'*{search_query}*'],
+            )
+
+        return queryset
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_active = False
+        instance.save()
+        return Response({"message": "Product deactivated successfully."}, status=status.HTTP_204_NO_CONTENT)
+
