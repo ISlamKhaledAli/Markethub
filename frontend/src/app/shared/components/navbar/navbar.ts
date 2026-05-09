@@ -9,6 +9,7 @@ import { AuthService } from '../../../core/services/auth';
 import { MatDividerModule } from '@angular/material/divider';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 import { UiService } from '../../../core/services/ui.service';
+import { ConfigService } from '../../../core/services/config';
 
 @Component({
   selector: 'app-navbar',
@@ -30,6 +31,9 @@ import { UiService } from '../../../core/services/ui.service';
 export class NavbarComponent {
   authService = inject(AuthService);
   private uiService = inject(UiService);
+  private configService = inject(ConfigService);
+
+  readonly navLinks = this.configService.navLinks;
 
   isAuthenticated = this.authService.isAuthenticated;
   currentUser = this.authService.currentUser;

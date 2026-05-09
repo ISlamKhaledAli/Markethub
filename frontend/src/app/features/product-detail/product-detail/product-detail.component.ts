@@ -8,11 +8,14 @@ import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
 import { UiService } from '../../../core/services/ui.service';
+import { ConfigService } from '../../../core/services/config';
+import { StarRatingComponent } from '../../../shared/components/star-rating/star-rating';
+import { PrimaryImagePipe } from '../../../shared/pipes/primary-image-pipe';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProductCardComponent],
+  imports: [CommonModule, RouterLink, ProductCardComponent, StarRatingComponent],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.scss',
 })
@@ -21,6 +24,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private uiService = inject(UiService);
+  private configService = inject(ConfigService);
+  private primaryImagePipe = new PrimaryImagePipe();
 
   product: Product | null = null;
   relatedProducts: Product[] = [];
@@ -64,7 +69,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.productService.getProductBySlug(slug).subscribe({
       next: (product: Product) => {
         this.product = product;
-        this.selectedImageUrl = product.images.find(i => i.is_primary)?.image ?? product.images[0]?.image ?? '';
+        this.selectedImageUrl = this.primaryImagePipe.transform(product.images);
         this.resolveCategory(product.category);
         this.isLoading = false;
       },
@@ -81,7 +86,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   resolveCategory(categoryId: number): void {
     this.categoryService.getCategories().subscribe({
-      next: (categories: Category[]) => {
+      next: (res: any) => {
+        const categories = Array.isArray(res) ? res : (res.results || []);
         const cat = categories.find((c: Category) => c.id === categoryId);
         if (cat) {
           this.categoryName = cat.name;
@@ -121,5 +127,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   addToCart(): void {
     this.uiService.showComingSoon('Cart');
+  }
+
+  onImageError(event: Event): void {
+    (event.target as HTMLImageElement).src = this.configService.catalogConfig.placeholders.productImage;
   }
 }

@@ -3,7 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NavbarComponent } from './shared/components/navbar/navbar';
-import { NewsletterComponent } from './shared/components/newsletter/newsletter.component';
+
 import { FooterComponent } from './shared/components/footer/footer.component';
 import { environment } from '../environments/environment';
 import { UiService } from './core/services/ui.service';
@@ -14,7 +14,6 @@ import { UiService } from './core/services/ui.service';
   imports: [
     RouterOutlet, 
     NavbarComponent, 
-    NewsletterComponent, 
     FooterComponent,
     MatSnackBarModule
   ],

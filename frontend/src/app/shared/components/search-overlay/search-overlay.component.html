@@ -26,13 +26,11 @@
             tabindex="0"
           >
             <div class="w-10 h-10 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-              @if (product.images[0]) {
-                <img [src]="product.images[0].image" class="w-full h-full object-cover">
-              } @else {
-                <div class="w-full h-full flex items-center justify-center bg-slate-100">
-                  <span class="material-symbols-outlined text-slate-300 text-sm">image</span>
-                </div>
-              }
+              <img 
+                [src]="product.images | primaryImage" 
+                (error)="onImageError($event)"
+                class="w-full h-full object-cover"
+              >
             </div>
             <div class="flex-grow min-w-0">
               <h4 class="text-sm font-medium text-slate-900 truncate" [innerHTML]="product.name | highlight: query"></h4>

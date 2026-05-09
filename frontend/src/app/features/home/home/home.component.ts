@@ -1,28 +1,21 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Observable, catchError, map, of, finalize } from 'rxjs';
+import { Observable, catchError, map, of, finalize, forkJoin } from 'rxjs';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { UiService } from '../../../core/services/ui.service';
-
-interface Banner {
-  title: string;
-  subtitle: string;
-  description: string;
-  image: string;
-  badge: string;
-  ctaText: string;
-  link: string;
-}
+import { ConfigService } from '../../../core/services/config';
+import { NewsletterComponent } from '../../../shared/components/newsletter/newsletter.component';
+import { PrimaryImagePipe } from '../../../shared/pipes/primary-image-pipe';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProductCardComponent],
+  imports: [CommonModule, RouterLink, ProductCardComponent, PrimaryImagePipe, NewsletterComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
@@ -30,23 +23,14 @@ export class HomeComponent implements OnInit {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private uiService = inject(UiService);
+  private configService = inject(ConfigService);
 
-  categories$: Observable<Category[]> = of([]);
-  featuredProducts$: Observable<Product[]> = of([]);
+  categories: Category[] = [];
+  featuredProducts: Product[] = [];
   isLoading = true;
   error: string | null = null;
 
-  banners: Banner[] = [
-    {
-      title: 'Defining the New Standard.',
-      subtitle: 'Summer Collection 2026',
-      description: 'Discover our curated arrivals designed for modern living. Precision-crafted essentials that bridge the gap between utility and luxury.',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDziO1l-bCgTE_FnyHagml6xf9Nj1xt_KP2AL33Rs57k_FgHm05gyUIdk6Vck6IdDOAEuS0qvMzRF_FQBWbvqFFiPvJn0ln74bvAcXaoeKZnJxKh6v5PZtedJ6TK8Lho462creZUryz1VqCI4NT2s2OQG4BTmlVsKEzybivG2hWNh9xk-TvxhBiByFY_ictSJ9NGipNlTwm5UhgN6TrMg6LpaiR_WtS1E20fxN_6RWp3hFmKYEtnMJcigfdH0fQ7__XrX5ONdgasQ4',
-      badge: 'New Arrivals',
-      ctaText: 'Shop New Arrivals',
-      link: '/catalog'
-    }
-  ];
+  readonly heroBanner = this.configService.homeConfig.hero;
 
   ngOnInit(): void {
     this.loadData();
@@ -55,23 +39,26 @@ export class HomeComponent implements OnInit {
   loadData(): void {
     this.isLoading = true;
     
-    this.categories$ = this.categoryService.getCategories().pipe(
-      catchError(err => {
-        console.error('Error fetching categories', err);
-        this.error = 'Failed to load categories';
-        return of([]);
-      })
-    );
-
-    this.featuredProducts$ = this.productService.getProducts({ ordering: '-created_at' }).pipe(
-      map(products => products.slice(0, 8)),
-      catchError(err => {
-        console.error('Error fetching products', err);
-        this.error = 'Failed to load featured products';
-        return of([]);
-      }),
+    forkJoin({
+      categories: this.categoryService.getCategories(),
+      products: this.productService.getProducts({ ordering: '-created_at' })
+    }).pipe(
       finalize(() => this.isLoading = false)
-    );
+    ).subscribe({
+      next: (data: any) => {
+        // Handle both flat array and paginated { results: [] } responses
+        const cats = Array.isArray(data.categories) ? data.categories : (data.categories.results || []);
+        const prods = Array.isArray(data.products) ? data.products : (data.products.results || []);
+        
+        this.categories = cats;
+        this.featuredProducts = prods.slice(0, 8);
+      },
+      error: (err) => {
+        console.error('Error loading home data', err);
+        this.error = 'Failed to load home content';
+        // Error is displayed via the template's error binding
+      }
+    });
   }
 
   addToCart(event: Event, product: Product): void {
@@ -88,5 +75,9 @@ export class HomeComponent implements OnInit {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return createdDate > thirtyDaysAgo;
+  }
+
+  onImageError(event: Event): void {
+    (event.target as HTMLImageElement).src = this.configService.catalogConfig.placeholders.productImage;
   }
 }

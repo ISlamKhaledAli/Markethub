@@ -26,11 +26,9 @@ export class NewsletterComponent {
     this.successMessage = '';
     
     // TODO: Connect to newsletter API endpoint when available
-    // Simulate success for now:
-    setTimeout(() => {
-      this.isSubmitting = false;
-      this.successMessage = "You're on the list! Welcome to the Nexus Circle.";
-      this.email = '';
-    }, 800);
+    // For now, process immediately to avoid simulated delays
+    this.isSubmitting = false;
+    this.successMessage = "You're on the list! Welcome to the Nexus Circle.";
+    this.email = '';
   }
 }

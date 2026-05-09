@@ -10,11 +10,22 @@ import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
 import { UiService } from '../../../core/services/ui.service';
+import { ConfigService } from '../../../core/services/config';
+import { PrimaryImagePipe } from '../../../shared/pipes/primary-image-pipe';
+import { StarRatingComponent } from '../../../shared/components/star-rating/star-rating';
 
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, ProductCardComponent],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    ReactiveFormsModule, 
+    RouterLink, 
+    ProductCardComponent,
+    PrimaryImagePipe,
+    StarRatingComponent
+  ],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.scss',
 })
@@ -24,6 +35,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private uiService = inject(UiService);
+  private configService = inject(ConfigService);
 
   // Filter state
   searchTerm = '';
@@ -31,7 +43,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
   minPrice: number | null = null;
   maxPrice: number | null = null;
   availability: boolean | null = null;  // true = in-stock only
-  ordering = '-created_at';  // default sort
+  ordering = this.configService.catalogConfig.defaultOrdering;  // default sort
 
   // UI state
   products: Product[] = [];
@@ -43,7 +55,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
   // Pagination
   page = 1;
-  pageSize = 12;
+  pageSize = this.configService.catalogConfig.defaultPageSize;
   hasMoreProducts = true;
 
   // Subscriptions
@@ -81,7 +93,9 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
   fetchCategories(): void {
     this.categoryService.getCategories().subscribe({
-      next: (cats: Category[]) => this.categories = cats,
+      next: (res: any) => {
+        this.categories = Array.isArray(res) ? res : (res.results || []);
+      },
       error: (err: any) => console.error('Failed to load categories', err)
     });
   }
@@ -168,5 +182,9 @@ export class CatalogComponent implements OnInit, OnDestroy {
       queryParams: params,
       queryParamsHandling: 'merge'
     });
+  }
+
+  onImageError(event: Event): void {
+    (event.target as HTMLImageElement).src = this.configService.catalogConfig.placeholders.productImage;
   }
 }

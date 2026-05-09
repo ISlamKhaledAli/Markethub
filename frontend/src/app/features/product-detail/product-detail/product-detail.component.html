@@ -44,7 +44,7 @@
         <!-- Main Image -->
         <div class="w-full aspect-[4/3] md:aspect-square lg:aspect-[4/3] rounded-xl overflow-hidden bg-surface-container flex items-center justify-center">
           @if (selectedImageUrl) {
-            <img [src]="selectedImageUrl" [alt]="product.name" class="w-full h-full object-cover">
+            <img [src]="selectedImageUrl" (error)="onImageError($event)" [alt]="product.name" class="w-full h-full object-cover">
           } @else {
             <span class="material-symbols-outlined text-6xl text-outline opacity-30">broken_image</span>
           }
@@ -61,7 +61,7 @@
                 [class.ring-offset-2]="selectedImageUrl === img.image"
                 class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-surface-container border border-slate-200 transition-all hover:opacity-80"
               >
-                <img [src]="img.image" [alt]="product.name + ' thumbnail'" class="w-full h-full object-cover">
+                <img [src]="img.image" (error)="onImageError($event)" [alt]="product.name + ' thumbnail'" class="w-full h-full object-cover">
               </button>
             }
           </div>
@@ -98,15 +98,7 @@
             </div>
             
             <div class="flex items-center gap-1 border-l border-outline-variant pl-6">
-              <div class="flex items-center text-tertiary">
-                <span class="material-symbols-outlined !text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-                <span class="material-symbols-outlined !text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-                <span class="material-symbols-outlined !text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-                <span class="material-symbols-outlined !text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-                <span class="material-symbols-outlined !text-sm" style="font-variation-settings: 'FILL' 0.5;">star_half</span>
-              </div>
-              <span class="text-label-md font-bold ml-1">4.5</span>
-              <span class="text-label-sm text-outline ml-1">(Reviews)</span>
+              <app-star-rating [rating]="0" [count]="0"></app-star-rating>
             </div>
           </div>
         </div>

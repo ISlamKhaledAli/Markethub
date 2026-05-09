@@ -1,16 +1,20 @@
-import { Component, Input, Output, EventEmitter, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChildren, QueryList, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Product } from '../../../core/models/product.model';
 import { HighlightPipe } from '../../pipes/highlight.pipe';
+import { PrimaryImagePipe } from '../../pipes/primary-image-pipe';
+import { ConfigService } from '../../../core/services/config';
 
 @Component({
   selector: 'app-search-overlay',
   standalone: true,
-  imports: [CommonModule, HighlightPipe],
+  imports: [CommonModule, HighlightPipe, PrimaryImagePipe],
   templateUrl: './search-overlay.component.html',
   styleUrl: './search-overlay.component.scss'
 })
 export class SearchOverlayComponent {
+  private configService = inject(ConfigService);
+  
   @Input() results: Product[] = [];
   @Input() isLoading = false;
   @Input() query = '';
@@ -53,5 +57,9 @@ export class SearchOverlayComponent {
 
   onViewAll(): void {
     this.viewAllClicked.emit();
+  }
+
+  onImageError(event: Event): void {
+    (event.target as HTMLImageElement).src = this.configService.catalogConfig.placeholders.productImage;
   }
 }

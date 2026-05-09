@@ -157,13 +157,7 @@
           @for (rating of [5, 4, 3, 2, 1]; track rating) {
             <label class="flex items-center gap-3 cursor-pointer group">
               <input (change)="showComingSoon('Rating Filter')" type="radio" name="rating" [value]="rating" class="w-4 h-4 text-primary focus:ring-primary/50 cursor-pointer">
-              <div class="flex items-center text-amber-400">
-                @for (star of [1,2,3,4,5]; track star) {
-                  <span class="material-symbols-outlined !text-base" [class.fill-1]="star <= rating">
-                    {{ star <= rating ? 'star' : 'star_outline' }}
-                  </span>
-                }
-              </div>
+              <app-star-rating [rating]="rating" [count]="0"></app-star-rating>
               <span class="text-on-surface-variant text-sm ml-1 group-hover:text-on-surface">
                 {{ rating === 5 ? '5.0' : rating + '.0 & up' }}
               </span>
@@ -218,7 +212,8 @@
               <!-- Image -->
               <div [routerLink]="['/products', product.slug]" class="w-48 aspect-[4/5] flex-shrink-0 rounded-lg overflow-hidden relative bg-surface-container cursor-pointer">
                 <img 
-                  [src]="product.images[0]?.image || 'assets/images/placeholder.png'" 
+                  [src]="product.images | primaryImage"
+                  (error)="onImageError($event)"
                   [alt]="product.name"
                   class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 >
@@ -240,13 +235,7 @@
                   </div>
                   
                   <div class="flex items-center gap-2 mb-4">
-                    <div class="flex items-center text-amber-400">
-                      <span class="material-symbols-outlined !text-sm fill-1">star</span>
-                      <span class="material-symbols-outlined !text-sm fill-1">star</span>
-                      <span class="material-symbols-outlined !text-sm fill-1">star</span>
-                      <span class="material-symbols-outlined !text-sm fill-1">star</span>
-                      <span class="material-symbols-outlined !text-sm">star_half</span>
-                    </div>
+                    <app-star-rating [rating]="0" [count]="0"></app-star-rating>
                     <span [class.bg-emerald-100]="product.stock > 0" [class.text-emerald-800]="product.stock > 0" [class.bg-red-100]="product.stock === 0" [class.text-red-800]="product.stock === 0" class="text-xs px-2 py-0.5 rounded">
                       {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
                     </span>

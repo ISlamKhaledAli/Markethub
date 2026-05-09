@@ -1,35 +1,32 @@
 <main class="w-full">
   <!-- Hero Section -->
-  @if (banners.length > 0) {
-    <section class="relative h-[870px] min-h-[600px] w-full overflow-hidden flex items-center">
-      @let banner = banners[0];
-      <div class="absolute inset-0 z-0">
-        <img [src]="banner.image" class="w-full h-full object-cover" [alt]="banner.title" />
-        <div class="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
-      </div>
-      <div class="relative z-10 max-w-7xl mx-auto px-6 w-full">
-        <div class="max-w-2xl space-y-6">
-          <span class="inline-block px-3 py-1 bg-surface-container text-primary font-label-sm tracking-wider uppercase rounded-sm">
-            {{ banner.subtitle }}
-          </span>
-          <h1 class="font-h1 text-h1 text-on-surface text-6xl md:text-8xl leading-tight">
-            {{ banner.title }}
-          </h1>
-          <p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
-            {{ banner.description }}
-          </p>
-          <div class="flex gap-4 pt-4">
-            <button [routerLink]="banner.link" class="bg-primary text-on-primary px-8 py-4 rounded-lg font-label-md hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
-              {{ banner.ctaText }}
-            </button>
-            <button (click)="showComingSoon('Lookbook')" class="bg-white border border-outline text-on-surface px-8 py-4 rounded-lg font-label-md hover:bg-surface transition-all active:scale-95">
-              View Lookbook
-            </button>
-          </div>
+  <section class="relative h-[870px] min-h-[600px] w-full overflow-hidden flex items-center">
+    <div class="absolute inset-0 z-0">
+      <img [src]="heroBanner.image" class="w-full h-full object-cover" [alt]="heroBanner.title" />
+      <div class="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
+    </div>
+    <div class="relative z-10 max-w-7xl mx-auto px-6 w-full">
+      <div class="max-w-2xl space-y-6">
+        <span class="inline-block px-3 py-1 bg-surface-container text-primary font-label-sm tracking-wider uppercase rounded-sm">
+          {{ heroBanner.subtitle }}
+        </span>
+        <h1 class="font-h1 text-h1 text-on-surface text-6xl md:text-8xl leading-tight">
+          {{ heroBanner.title }}
+        </h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
+          {{ heroBanner.description }}
+        </p>
+        <div class="flex gap-4 pt-4">
+          <button [routerLink]="heroBanner.link" class="bg-primary text-on-primary px-8 py-4 rounded-lg font-label-md hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+            {{ heroBanner.ctaText }}
+          </button>
+          <button (click)="showComingSoon('Lookbook')" class="bg-white border border-outline text-on-surface px-8 py-4 rounded-lg font-label-md hover:bg-surface transition-all active:scale-95">
+            View Lookbook
+          </button>
         </div>
       </div>
-    </section>
-  }
+    </div>
+  </section>
 
   <!-- Categories Grid (Bento Style) -->
   <section class="py-24 max-w-7xl mx-auto px-6">
@@ -38,7 +35,7 @@
         <h2 class="font-h2 text-h2 text-on-surface">Explore Categories</h2>
         <p class="text-on-surface-variant font-body-md">Browse our collection by department</p>
       </div>
-      <a [routerLink]="['/catalog']" class="text-primary font-label-md flex items-center gap-1 hover:underline">
+      <a [routerLink]="['/catalog']" [queryParams]="{ view: 'categories' }" class="text-primary font-label-md flex items-center gap-1 hover:underline">
         View all categories <span class="material-symbols-outlined text-sm">arrow_forward</span>
       </a>
     </div>
@@ -51,7 +48,7 @@
         <div class="animate-pulse bg-surface-container rounded-xl"></div>
         <div class="animate-pulse bg-surface-container rounded-xl"></div>
       } @else {
-        @for (cat of categories$ | async; track cat.id; let i = $index) {
+        @for (cat of categories; track cat.id; let i = $index) {
           <div 
             [routerLink]="['/catalog']" 
             [queryParams]="{ category: cat.slug }"
@@ -101,11 +98,12 @@
             </div>
           }
         } @else {
-          @for (product of featuredProducts$ | async; track product.id) {
+          @for (product of featuredProducts; track product.id) {
             <div [routerLink]="['/products', product.slug]" class="flex-none w-72 group cursor-pointer">
               <div class="relative aspect-[4/5] overflow-hidden rounded-lg bg-white mb-4">
                 <img 
-                  [src]="product.images[0]?.image || 'assets/images/placeholder.png'" 
+                  [src]="product.images | primaryImage" 
+                  (error)="onImageError($event)"
                   [alt]="product.name"
                   class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
@@ -170,11 +168,12 @@
             </div>
           }
         } @else {
-          @for (product of featuredProducts$ | async; track product.id) {
+          @for (product of featuredProducts; track product.id) {
             <app-product-card [product]="product"></app-product-card>
           }
         }
       </div>
     </div>
   </section>
+  <app-newsletter></app-newsletter>
 </main>
