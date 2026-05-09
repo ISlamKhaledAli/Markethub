@@ -1,0 +1,76 @@
+<footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full max-w-7xl mx-auto">
+    
+    <!-- Column 1: Brand -->
+    <div class="space-y-4">
+      <span class="font-bold text-on-surface dark:text-white text-xl">NexusCommerce</span>
+      <p class="font-inter text-xs text-on-surface-variant leading-relaxed">
+        The premier destination for modern commerce, bridging high-trust quality with frictionless digital experiences.
+      </p>
+      <div class="flex gap-4">
+        <a href="#" class="text-slate-400 hover:text-primary transition-colors">
+          <span class="material-symbols-outlined">public</span>
+        </a>
+        <a href="#" class="text-slate-400 hover:text-primary transition-colors">
+          <span class="material-symbols-outlined">share</span>
+        </a>
+        <a href="#" class="text-slate-400 hover:text-primary transition-colors">
+          <span class="material-symbols-outlined">mail</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Column 2: Shop -->
+    <div class="space-y-4">
+      <h4 class="font-bold text-on-surface dark:text-white text-xs uppercase tracking-wider">Shop</h4>
+      <ul class="space-y-2">
+        <li>
+          <a [routerLink]="['/catalog']" [queryParams]="{ ordering: '-created_at' }" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">
+            New Arrivals
+          </a>
+        </li>
+        <li>
+          <a [routerLink]="['/catalog']" [queryParams]="{ ordering: '-created_at' }" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">
+            Best Sellers
+          </a>
+        </li>
+        <li>
+          <a [routerLink]="['/catalog']" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">
+            Collections
+          </a>
+        </li>
+        <li>
+          <a [routerLink]="['/catalog']" [queryParams]="{ min_price: 0, max_price: 100 }" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">
+            Sale
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Column 3: Help -->
+    <div class="space-y-4">
+      <h4 class="font-bold text-on-surface dark:text-white text-xs uppercase tracking-wider">Help</h4>
+      <ul class="space-y-2">
+        <li><a href="#" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">Privacy Policy</a></li>
+        <li><a href="#" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">Terms of Service</a></li>
+        <li><a href="#" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">Shipping Info</a></li>
+        <li><a href="#" class="font-inter text-xs text-on-surface-variant hover:text-primary transition-colors">Returns</a></li>
+      </ul>
+    </div>
+
+    <!-- Column 4: Contact -->
+    <div class="space-y-4">
+      <h4 class="font-bold text-on-surface dark:text-white text-xs uppercase tracking-wider">Contact</h4>
+      <p class="font-inter text-xs text-on-surface-variant">123 Commerce Way<br/>Nexus Park, CA 90210</p>
+      <p class="font-inter text-xs text-on-surface-variant">support@nexuscommerce.com</p>
+      <p class="font-inter text-xs text-primary font-bold">+1 (800) NEXUS-HQ</p>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="px-12 py-8 border-t border-slate-100 dark:border-slate-800 text-center">
+    <p class="font-inter text-xs text-on-surface-variant">
+      © {{ currentYear }} NexusCommerce. All rights reserved.
+    </p>
+  </div>
+</footer>

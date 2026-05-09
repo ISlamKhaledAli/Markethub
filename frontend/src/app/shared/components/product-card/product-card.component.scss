@@ -1,0 +1,14 @@
+.material-symbols-outlined {
+  &.fill-1 {
+    font-variation-settings: 'FILL' 1;
+  }
+}
+
+:host {
+  display: block;
+  transition: transform 0.2s ease-in-out;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}

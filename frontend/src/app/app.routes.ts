@@ -31,7 +31,23 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
-    children: [],
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('./features/home/home-routing-module').then((m) => m.HomeRoutingModule),
+      },
+      {
+        path: 'catalog',
+        loadChildren: () =>
+          import('./features/catalog/catalog-routing-module').then((m) => m.CatalogRoutingModule),
+      },
+      {
+        path: 'products/:slug',
+        loadChildren: () =>
+          import('./features/product-detail/product-detail-routing-module').then((m) => m.ProductDetailRoutingModule),
+      },
+    ],
   },
   {
     path: 'seller',
