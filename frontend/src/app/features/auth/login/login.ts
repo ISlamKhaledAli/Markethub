@@ -57,7 +57,9 @@ export class LoginComponent {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(err.error?.detail || 'Invalid email or password. Please try again.');
+        const detail = err.error?.detail;
+        const message = Array.isArray(detail) ? detail[0] : detail;
+        this.errorMessage.set(message || 'Invalid email or password. Please try again.');
       },
     });
   }

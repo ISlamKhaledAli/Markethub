@@ -36,6 +36,10 @@ export class AuthService {
     return this.http.post(`${this.API_URL}/register/`, userData);
   }
 
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get(`${this.API_URL}/verify-email/${token}/`);
+  }
+
   loadUserProfile(): Observable<any> {
     return this.http.get(`${this.API_URL}/me/`).pipe(
       tap((res: any) => {

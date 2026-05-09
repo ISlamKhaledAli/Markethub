@@ -1,0 +1,25 @@
+<div class="verify-container">
+  <mat-card class="verify-card">
+    <mat-card-content>
+      <div class="status-icon">
+        @if (status() === 'loading') {
+          <mat-spinner diameter="60"></mat-spinner>
+        } @else if (status() === 'success') {
+          <mat-icon class="success-icon">check_circle</mat-icon>
+        } @else {
+          <mat-icon class="error-icon">error</mat-icon>
+        }
+      </div>
+
+      <h2 class="message">{{ message() }}</h2>
+
+      @if (status() === 'error') {
+        <button mat-raised-button color="primary" routerLink="/auth/login" class="action-button">
+          Go to Login
+        </button>
+      } @else if (status() === 'success') {
+        <p class="redirect-info">You will be redirected automatically in 3 seconds.</p>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -53,8 +53,25 @@ class RegisterView(ApiResponseMixin, generics.CreateAPIView):
             )
         return self.error_response(message="Registration failed", data=serializer.errors)
 
-class LoginView(TokenObtainPairView):
+class LoginView(ApiResponseMixin, TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            user = User.objects.get(email=request.data.get('email'))
+            return self.success_response(
+                data={
+                    'access': response.data.get('access'),
+                    'refresh': response.data.get('refresh'),
+                    'user': {
+                        'email': user.email,
+                        'role': user.role,
+                    }
+                },
+                message="Login successful"
+            )
+        return response
 
 class LogoutView(ApiResponseMixin, views.APIView):
     permission_classes = (permissions.IsAuthenticated,)

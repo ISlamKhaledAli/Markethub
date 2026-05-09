@@ -19,6 +19,16 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'verify-email/:token',
+    loadComponent: () =>
+      import('./features/auth/verify-email/verify-email').then((m) => m.VerifyEmailComponent),
+  },
+  {
+    path: 'verify_email/:token',
+    loadComponent: () =>
+      import('./features/auth/verify-email/verify-email').then((m) => m.VerifyEmailComponent),
+  },
+  {
     path: '',
     component: MainLayoutComponent,
     children: [],

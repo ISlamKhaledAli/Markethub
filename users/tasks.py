@@ -9,7 +9,7 @@ def send_verification_email(user_id, email):
     signer = TimestampSigner()
     token = signer.sign(str(user_id))
     
-    verify_url = f"{settings.FRONTEND_URL}/verify-email/{token}"
+    verify_url = f"{settings.FRONTEND_URL}/verify_email/{token}"
     
     subject = 'Verify your email for MarketHub'
     message = f'Please click the link below to verify your email:\n\n{verify_url}'
