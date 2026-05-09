@@ -26,15 +26,14 @@ export const routes: Routes = [
   {
     path: 'seller',
     canActivate: [roleGuard(['seller', 'admin'])],
-    loadComponent: () =>
-      import('./features/auth/login/login').then((m) => m.LoginComponent), // مؤقتاً حتى نبنيها
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.LoginComponent), // مؤقتاً حتى نبنيها
   },
   {
     path: 'admin',
     canActivate: [roleGuard(['admin'])],
-    loadComponent: () => import('./features/auth/login/login').then(m => m.LoginComponent) // مؤقتاً حتى نبنيها
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.LoginComponent), // مؤقتاً حتى نبنيها
   },
 
   // Fallback Route
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
 ];
