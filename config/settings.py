@@ -47,7 +47,9 @@ INSTALLED_APPS = [
     # Local apps
     'users.apps.UsersConfig',
     'products.apps.ProductsConfig',
+    'promos.apps.PromosConfig',
     'orders.apps.OrdersConfig',
+    'payments.apps.PaymentsConfig',
 ]
 
 MIDDLEWARE = [
@@ -188,5 +190,9 @@ CORS_ALLOWED_ORIGINS = [
 # Google OAuth Credentials
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
 GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET', default='')
+
+# Payments (switch to stripe when implemented; API contracts stay stable)
+PAYMENT_PROVIDER = env('PAYMENT_PROVIDER', default='mock')
+PAYMENT_WEBHOOK_SECRET = env('PAYMENT_WEBHOOK_SECRET', default='dev-webhook-secret-change-me')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

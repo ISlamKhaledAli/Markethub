@@ -19,17 +19,59 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     total_price = serializers.SerializerMethodField()
+    subtotal = serializers.SerializerMethodField()
+    promo_discount = serializers.SerializerMethodField()
+    total_after_promo = serializers.SerializerMethodField()
+    applied_promo_code = serializers.CharField(source='applied_promo.code', read_only=True, allow_null=True)
 
     class Meta:
         model = Cart
-        fields = ['id', 'items', 'total_price', 'created_at']
+        fields = [
+            'id',
+            'items',
+            'applied_promo',
+            'applied_promo_code',
+            'subtotal',
+            'promo_discount',
+            'total_after_promo',
+            'total_price',
+            'created_at',
+        ]
 
-    def get_total_price(self, obj):
-        total = sum(
+    def _line_sum(self, obj):
+        return sum(
             item.quantity * (item.product.discount_price if item.product.discount_price else item.product.price)
             for item in obj.items.all()
         )
-        return str(total)
+
+    def get_subtotal(self, obj):
+        return str(self._line_sum(obj))
+
+    def get_total_price(self, obj):
+        """Sum of line items before promo (kept for backwards compatibility)."""
+        return str(self._line_sum(obj))
+
+    def get_promo_discount(self, obj):
+        from decimal import Decimal
+
+        from promos.services import cart_subtotal, validate_promo_for_subtotal
+
+        subtotal = cart_subtotal(obj)
+        if obj.applied_promo_id:
+            v = validate_promo_for_subtotal(obj.applied_promo, subtotal)
+            if v.valid:
+                return str(v.discount_amount)
+        return str(Decimal('0'))
+
+    def get_total_after_promo(self, obj):
+        from promos.services import cart_subtotal, validate_promo_for_subtotal
+
+        subtotal = cart_subtotal(obj)
+        if obj.applied_promo_id:
+            v = validate_promo_for_subtotal(obj.applied_promo, subtotal)
+            if v.valid:
+                return str(v.total_after_discount)
+        return str(subtotal)
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_details = ProductSerializer(source='product', read_only=True)

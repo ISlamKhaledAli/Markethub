@@ -1,11 +1,23 @@
+from decimal import Decimal
+
+from django.db import transaction
 from rest_framework import generics, views, status, permissions
 from rest_framework.response import Response
-from django.db import transaction
+
+from products.models import Product
+from promos.models import PromoCode
+from promos.services import (
+    allocate_order_totals,
+    cart_subtotal,
+    increment_promo_usage,
+    line_total_for_item,
+    validate_promo_for_subtotal,
+)
+
 from .models import Cart, CartItem, Order, OrderItem
 from .serializers import (
     CartSerializer, CartItemSerializer, OrderSerializer, CheckoutSerializer
 )
-from products.models import Product
 
 class CartView(generics.RetrieveAPIView):
     serializer_class = CartSerializer
@@ -86,38 +98,58 @@ class CheckoutView(views.APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            cart = Cart.objects.get(user=request.user)
-        except Cart.DoesNotExist:
+        cart = Cart.objects.select_for_update().filter(user=request.user).first()
+        if cart is None:
             return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
-        items = cart.items.all()
-        if not items.exists():
+        items_qs = cart.items.select_related('product', 'product__seller').all()
+        if not items_qs.exists():
             return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         shipping_address = serializer.validated_data['shipping_address']
         contact_phone = serializer.validated_data['contact_phone']
 
-        # Group items by seller
+        subtotal = cart_subtotal(cart)
+        if subtotal <= 0:
+            return Response({"error": "Invalid cart total."}, status=status.HTTP_400_BAD_REQUEST)
+
+        promo = None
+        discount = Decimal('0')
+        if cart.applied_promo_id:
+            promo = PromoCode.objects.select_for_update().filter(pk=cart.applied_promo_id).first()
+            if not promo:
+                return Response({"error": "Applied promo is no longer available."}, status=status.HTTP_400_BAD_REQUEST)
+            presult = validate_promo_for_subtotal(promo, subtotal)
+            if not presult.valid:
+                return Response({"error": presult.message}, status=status.HTTP_400_BAD_REQUEST)
+            discount = presult.discount_amount
+
         seller_items = {}
-        for item in items:
+        seller_raw = {}
+        for item in items_qs:
             seller = item.product.seller
-            if seller not in seller_items:
-                seller_items[seller] = []
-            seller_items[seller].append(item)
+            seller_items.setdefault(seller, []).append(item)
+
+        for seller, item_list in seller_items.items():
+            seller_raw[seller] = sum(line_total_for_item(i) for i in item_list)
+
+        raw_sum = sum(seller_raw.values(), start=Decimal('0')).quantize(Decimal('0.01'))
+        if raw_sum != subtotal.quantize(Decimal('0.01')):
+            return Response({"error": "Cart total mismatch."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            order_totals = allocate_order_totals(seller_raw, subtotal, discount)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         orders_created = []
 
         for seller, items_list in seller_items.items():
-            total_amount = sum(
-                item.quantity * (item.product.discount_price if item.product.discount_price else item.product.price)
-                for item in items_list
-            )
-
+            order_total = order_totals[seller]
             order = Order.objects.create(
                 buyer=request.user,
                 seller=seller,
-                total_amount=total_amount,
+                total_amount=order_total,
                 shipping_address=shipping_address,
                 contact_phone=contact_phone,
                 status='pending'
@@ -132,13 +164,16 @@ class CheckoutView(views.APIView):
                     price=price,
                     quantity=item.quantity
                 )
-                # Decrease stock
                 item.product.stock -= item.quantity
                 item.product.save()
 
             orders_created.append(order)
 
-        # Clear cart
+        if promo:
+            increment_promo_usage(promo)
+
+        cart.applied_promo = None
+        cart.save(update_fields=['applied_promo', 'updated_at'])
         cart.items.all().delete()
 
         orders_serializer = OrderSerializer(orders_created, many=True)
