@@ -5,12 +5,16 @@ from payments.models import Payment
 
 class PaymentSerializer(serializers.ModelSerializer):
     order_id = serializers.IntegerField(source='order.id', read_only=True)
+    buyer_email = serializers.SerializerMethodField()
+    seller_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Payment
         fields = [
             'id',
             'order_id',
+            'buyer_email',
+            'seller_name',
             'provider',
             'status',
             'amount',
@@ -22,6 +26,16 @@ class PaymentSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = fields
+
+    def get_buyer_email(self, obj):
+        if obj.order_id and hasattr(obj.order, 'buyer') and obj.order.buyer_id:
+            return obj.order.buyer.email
+        return ''
+
+    def get_seller_name(self, obj):
+        if obj.order_id and hasattr(obj.order, 'seller') and obj.order.seller_id:
+            return obj.order.seller.store_name
+        return ''
 
 
 class CreateIntentSerializer(serializers.Serializer):

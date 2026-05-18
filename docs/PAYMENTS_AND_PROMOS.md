@@ -29,6 +29,14 @@ Existing variables (`SECRET_KEY`, `DATABASE_URL`, `FRONTEND_URL`, email, Redis, 
 
 Zero-total orders get an immediate **succeeded** payment record (no provider call).
 
+## Payment history visibility (`GET /api/payments/history/`)
+
+- **Customers**: payments where they are the payer (`Payment.user`).
+- **Sellers**: payments tied to orders for their `SellerProfile`.
+- **Admins**: all payments.
+
+Each row includes `buyer_email` and `seller_name` (from the related order) for admin/seller dashboards.
+
 ## Promo flow
 
 - **Validate** — `POST /api/promos/validate/` `{ "code": "SAVE10" }` (auth required, uses current cart).

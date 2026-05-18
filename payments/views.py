@@ -11,7 +11,7 @@ from payments.services import (
     PaymentServiceError,
     apply_webhook_event,
     create_payment_intent,
-    list_payments_for_user,
+    list_payments_for_account,
     verify_payment,
 )
 from users.mixins import ApiResponseMixin
@@ -73,7 +73,7 @@ class PaymentHistoryView(ApiResponseMixin, views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        qs = list_payments_for_user(request.user)
+        qs = list_payments_for_account(request.user)
         return self.success_response(
             data={'results': PaymentSerializer(qs, many=True).data},
             message='OK',

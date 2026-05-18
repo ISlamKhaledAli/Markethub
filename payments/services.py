@@ -192,5 +192,10 @@ def apply_webhook_event(*, transaction_id: str, event: str) -> Payment:
     raise PaymentServiceError('Unsupported webhook event.', 'unsupported_event')
 
 
-def list_payments_for_user(user):
-    return Payment.objects.filter(user=user).select_related('order').order_by('-created_at')
+def list_payments_for_account(user):
+    qs = Payment.objects.select_related('order', 'order__buyer', 'order__seller')
+    if user.role == 'admin':
+        return qs.order_by('-created_at')
+    if user.role == 'seller' and hasattr(user, 'seller_profile'):
+        return qs.filter(order__seller=user.seller_profile).order_by('-created_at')
+    return qs.filter(user=user).order_by('-created_at')
