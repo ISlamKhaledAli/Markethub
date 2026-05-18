@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from decimal import Decimal
 from typing import Any
 
@@ -7,9 +8,11 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from orders.fulfillment import FulfillmentError, fulfill_order_on_payment
 from orders.models import Order
 from payments.models import Payment
 from payments.providers import get_payment_provider
+from payments.providers.stripe import StripePaymentProvider
 
 
 class PaymentServiceError(Exception):
@@ -51,7 +54,7 @@ def create_payment_intent(*, user, order_id: int) -> Payment:
             client_secret='',
             paid_at=timezone.now(),
         )
-        Order.objects.filter(pk=order.pk).update(status='accepted')
+        _complete_order_payment(order)
         return payment
 
     existing = (
@@ -66,25 +69,39 @@ def create_payment_intent(*, user, order_id: int) -> Payment:
         if existing.amount != amount:
             existing.amount = amount
             existing.save(update_fields=['amount', 'updated_at'])
+        if provider_enum == Payment.PROVIDER_STRIPE and existing.transaction_id:
+            url = StripePaymentProvider.retrieve_open_session_url(existing.transaction_id)
+            if url and not existing.checkout_url:
+                existing.checkout_url = url
+                existing.save(update_fields=['checkout_url', 'updated_at'])
         return existing
 
     provider = get_payment_provider()
-    metadata: dict[str, Any] = {
-        'order_id': str(order.id),
-        'user_id': str(user.id),
-    }
-    intent = provider.create_payment_intent(amount=amount, currency='usd', metadata=metadata)
-
-    return Payment.objects.create(
+    pending_txn = f'pending_{uuid.uuid4().hex[:20]}'
+    payment = Payment.objects.create(
         order=order,
         user=user,
         provider=provider_enum,
         status=Payment.STATUS_PENDING,
         amount=amount,
         currency='usd',
-        transaction_id=intent['transaction_id'],
-        client_secret=intent['client_secret'],
+        transaction_id=pending_txn,
+        client_secret='',
+        checkout_url='',
     )
+
+    metadata: dict[str, Any] = {
+        'order_id': str(order.id),
+        'user_id': str(user.id),
+        'payment_id': str(payment.pk),
+    }
+    intent = provider.create_payment_intent(amount=amount, currency='usd', metadata=metadata)
+
+    payment.transaction_id = intent['transaction_id']
+    payment.client_secret = intent.get('client_secret', '')
+    payment.checkout_url = intent.get('checkout_url', '')
+    payment.save(update_fields=['transaction_id', 'client_secret', 'checkout_url', 'updated_at'])
+    return payment
 
 
 @transaction.atomic
@@ -107,8 +124,13 @@ def verify_payment(
     if payment.status == Payment.STATUS_SUCCEEDED:
         raise PaymentServiceError('Payment already completed.', 'already_succeeded')
 
-    if payment.client_secret != client_secret:
-        raise PaymentServiceError('Invalid client secret.', 'invalid_secret')
+    if payment.provider == Payment.PROVIDER_MOCK:
+        if payment.client_secret != client_secret:
+            raise PaymentServiceError('Invalid client secret.', 'invalid_secret')
+    elif payment.provider == Payment.PROVIDER_STRIPE:
+        allowed = {payment.client_secret, payment.transaction_id, payment.checkout_url}
+        if client_secret not in allowed and not client_secret.startswith('cs_'):
+            raise PaymentServiceError('Invalid payment session.', 'invalid_secret')
 
     if Payment.objects.filter(
         order_id=payment.order_id,
@@ -126,12 +148,21 @@ def verify_payment(
     return _apply_status(payment, outcome)
 
 
+def _complete_order_payment(order: Order) -> None:
+    order.refresh_from_db()
+    try:
+        fulfill_order_on_payment(order)
+    except FulfillmentError as exc:
+        raise PaymentServiceError(str(exc), 'fulfillment_failed') from exc
+    Order.objects.filter(pk=order.pk).update(status='accepted')
+
+
 def _apply_status(payment: Payment, outcome: str) -> Payment:
     if outcome == Payment.STATUS_SUCCEEDED:
         payment.status = Payment.STATUS_SUCCEEDED
         payment.paid_at = timezone.now()
         payment.save(update_fields=['status', 'paid_at', 'updated_at'])
-        Order.objects.filter(pk=payment.order_id).update(status='accepted')
+        _complete_order_payment(payment.order)
         return payment
 
     if outcome == Payment.STATUS_FAILED:
@@ -190,6 +221,20 @@ def apply_webhook_event(*, transaction_id: str, event: str) -> Payment:
         return payment
 
     raise PaymentServiceError('Unsupported webhook event.', 'unsupported_event')
+
+
+@transaction.atomic
+def apply_stripe_webhook_event(*, event_type: str, transaction_id: str) -> Payment:
+    """Map Stripe webhook event types to internal payment status updates."""
+    if event_type == 'checkout.session.completed':
+        return apply_webhook_event(transaction_id=transaction_id, event='succeeded')
+    if event_type in (
+        'checkout.session.expired',
+        'checkout.session.async_payment_failed',
+        'payment_intent.payment_failed',
+    ):
+        return apply_webhook_event(transaction_id=transaction_id, event='failed')
+    raise PaymentServiceError(f'Unhandled Stripe event: {event_type}', 'unsupported_event')
 
 
 def list_payments_for_account(user):

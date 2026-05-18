@@ -22,4 +22,13 @@ export class UiService {
       verticalPosition: 'bottom',
     });
   }
+
+  showError(message: string): void {
+    this.snackBar.open(message, 'Dismiss', {
+      duration: 5000,
+      horizontalPosition: 'end',
+      verticalPosition: 'bottom',
+      panelClass: ['snackbar-error'],
+    });
+  }
 }

@@ -1,3 +1,11 @@
+"""
+DEPRECATED: Use the Django management command instead:
+
+    python manage.py seed_data
+    python manage.py seed_data --flush
+
+This HTTP script remains for reference only.
+"""
 import requests
 import sys
 import json

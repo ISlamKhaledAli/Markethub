@@ -2,7 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { OrdersService, Cart, CartItem } from '../../../core/services/orders.service';
+import { OrdersService, Cart, CartItem, Order } from '../../../core/services/orders.service';
+import { PaymentService } from '../../../core/services/payment.service';
 import { UiService } from '../../../core/services/ui.service';
 
 @Component({
@@ -14,6 +15,7 @@ import { UiService } from '../../../core/services/ui.service';
 })
 export class CheckoutComponent implements OnInit {
   private ordersService = inject(OrdersService);
+  private paymentService = inject(PaymentService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private uiService = inject(UiService);
@@ -57,16 +59,51 @@ export class CheckoutComponent implements OnInit {
     this.processing = true;
     this.cdr.markForCheck();
     this.ordersService.checkout(this.shippingAddress.trim(), this.contactPhone.trim()).subscribe({
-      next: () => {
+      next: (orders) => {
         this.processing = false;
-        this.uiService.showInfo('Order placed successfully!');
-        this.router.navigate(['/my-orders']);
+        this.cdr.markForCheck();
+        if (!orders?.length) {
+          this.uiService.showInfo('No orders were created.');
+          return;
+        }
+        if (orders.length > 1) {
+          sessionStorage.setItem(
+            'pending_order_ids',
+            JSON.stringify(orders.slice(1).map((o) => o.id)),
+          );
+        }
+        this.startPayment(orders[0]);
       },
       error: (err) => {
         this.processing = false;
         this.cdr.markForCheck();
         const msg = err.error?.error || err.error?.detail || 'Could not place order.';
         this.uiService.showInfo(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      },
+    });
+  }
+
+  private startPayment(order: Order): void {
+    this.processing = true;
+    this.cdr.markForCheck();
+    this.paymentService.createIntent(order.id).subscribe({
+      next: (payment) => {
+        this.processing = false;
+        this.cdr.markForCheck();
+        if (payment.checkout_url) {
+          this.paymentService.startPayment(payment);
+          return;
+        }
+        this.router.navigate(['/payment/mock'], {
+          queryParams: { payment_id: payment.id, client_secret: payment.client_secret },
+        });
+      },
+      error: (err) => {
+        this.processing = false;
+        this.cdr.markForCheck();
+        const msg = err.error?.message || 'Could not start payment. Pay from My Orders.';
+        this.uiService.showInfo(msg);
+        this.router.navigate(['/my-orders']);
       },
     });
   }

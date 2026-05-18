@@ -64,6 +64,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/orders/my-orders/my-orders').then(m => m.MyOrdersComponent)
       },
       {
+        path: 'payment/success',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/payment/payment-success/payment-success').then((m) => m.PaymentSuccessComponent),
+      },
+      {
+        path: 'payment/cancel',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/payment/payment-cancel/payment-cancel').then((m) => m.PaymentCancelComponent),
+      },
+      {
+        path: 'payment/mock',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/payment/payment-mock/payment-mock').then((m) => m.PaymentMockComponent),
+      },
+      {
         path: 'profile',
         canActivate: [authGuard],
         loadComponent: () => import('./features/profile/profile/profile').then(m => m.ProfileComponent)

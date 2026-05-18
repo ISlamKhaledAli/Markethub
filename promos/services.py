@@ -49,7 +49,7 @@ def validate_promo_for_subtotal(promo: PromoCode | None, subtotal: Decimal) -> P
             valid=False,
             code='',
             discount_amount=Decimal('0'),
-            message='Promo code is required.',
+            message='Invalid promo code.',
             subtotal=subtotal,
             total_after_discount=subtotal,
         )

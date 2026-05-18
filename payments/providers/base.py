@@ -17,7 +17,8 @@ class BasePaymentProvider(ABC):
         metadata: dict[str, Any],
     ) -> dict[str, str]:
         """
-        Returns keys at minimum: client_secret, transaction_id
+        Returns keys at minimum: client_secret, transaction_id.
+        Stripe also returns checkout_url for hosted Checkout redirect.
         """
 
     @abstractmethod

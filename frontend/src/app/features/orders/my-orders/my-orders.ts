@@ -1,17 +1,26 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { OrdersService, Order } from '../../../core/services/orders.service';
+import { PaymentService } from '../../../core/services/payment.service';
+import { UiService } from '../../../core/services/ui.service';
 
 @Component({
   selector: 'app-my-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatButtonModule],
   templateUrl: './my-orders.html',
   styleUrl: './my-orders.scss',
 })
 export class MyOrdersComponent implements OnInit {
   private ordersService = inject(OrdersService);
+  private paymentService = inject(PaymentService);
+  private router = inject(Router);
+  private ui = inject(UiService);
   private cdr = inject(ChangeDetectorRef);
+
+  payingOrderId: number | null = null;
 
   orders: Order[] = [];
   loading = true;
@@ -41,5 +50,27 @@ export class MyOrdersComponent implements OnInit {
       cancelled: 'bg-gray-100 text-gray-700',
     };
     return map[status] ?? 'bg-gray-100 text-gray-700';
+  }
+
+  payOrder(order: Order): void {
+    this.payingOrderId = order.id;
+    this.paymentService.createIntent(order.id).subscribe({
+      next: (payment) => {
+        this.payingOrderId = null;
+        this.cdr.markForCheck();
+        if (payment.checkout_url) {
+          this.paymentService.startPayment(payment);
+          return;
+        }
+        this.router.navigate(['/payment/mock'], {
+          queryParams: { payment_id: payment.id, client_secret: payment.client_secret },
+        });
+      },
+      error: (err) => {
+        this.payingOrderId = null;
+        this.cdr.markForCheck();
+        this.ui.showInfo(err.error?.message || 'Could not start payment.');
+      },
+    });
   }
 }

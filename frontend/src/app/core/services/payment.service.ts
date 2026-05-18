@@ -26,14 +26,26 @@ export class PaymentService {
     paymentId: number,
     clientSecret: string,
     simulateOutcome?: 'succeeded' | 'failed' | 'processing' | 'pending' | 'random',
+    sessionId?: string,
   ): Observable<PaymentRecord> {
-    const body: Record<string, unknown> = {
-      payment_id: paymentId,
-      client_secret: clientSecret,
-    };
+    const body: Record<string, unknown> = { payment_id: paymentId };
+    if (sessionId) {
+      body['session_id'] = sessionId;
+    } else {
+      body['client_secret'] = clientSecret;
+    }
     if (simulateOutcome) {
       body['simulate_outcome'] = simulateOutcome;
     }
     return this.http.post<ApiEnvelope<PaymentRecord>>(`${this.base}/verify/`, body).pipe(map((res) => res.data));
+  }
+
+  /** Redirect to Stripe Checkout or mock payment page. */
+  startPayment(payment: PaymentRecord): void {
+    const url = payment.checkout_url?.trim();
+    if (url) {
+      window.location.href = url;
+      return;
+    }
   }
 }

@@ -13,6 +13,7 @@ export interface PaymentRecord {
   currency: string;
   transaction_id: string | null;
   client_secret: string;
+  checkout_url?: string;
   paid_at: string | null;
   created_at: string;
   updated_at: string;

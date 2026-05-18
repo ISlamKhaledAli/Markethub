@@ -19,7 +19,10 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:4200')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS',
+    default=['localhost', '127.0.0.1', '[::1]'] if env.bool('DEBUG', default=False) else [],
+)
 
 
 # Application definition
@@ -130,7 +133,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -138,8 +141,9 @@ REST_FRAMEWORK = {
 }
 
 # Simple JWT Settings
+_ACCESS_MINUTES = 60 if env.bool('DEBUG', default=False) else 30
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=_ACCESS_MINUTES),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -172,11 +176,11 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # CORS Settings
 # CORS_ALLOW_ALL_ORIGINS = True  # In production, specify origins
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys([
     "http://localhost:4200",
     "http://127.0.0.1:4200",
     env('FRONTEND_URL', default="http://localhost:3000"),
-]
+]))
 
 # Allauth Settings (for Google OAuth bonus)
 # AUTHENTICATION_BACKENDS = [
@@ -191,8 +195,21 @@ CORS_ALLOWED_ORIGINS = [
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
 GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET', default='')
 
-# Payments (switch to stripe when implemented; API contracts stay stable)
+# Payments — mock (local) or stripe (Checkout Sessions)
 PAYMENT_PROVIDER = env('PAYMENT_PROVIDER', default='mock')
 PAYMENT_WEBHOOK_SECRET = env('PAYMENT_WEBHOOK_SECRET', default='dev-webhook-secret-change-me')
+ENABLE_PAYMENT_WEBHOOK_SIMULATION = env.bool('ENABLE_PAYMENT_WEBHOOK_SIMULATION', default=DEBUG)
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
+STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY', default='')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
+REGISTER_AUTO_VERIFY = env.bool('REGISTER_AUTO_VERIFY', default=DEBUG)
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=False)
+    SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=True)
+    CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=True)
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

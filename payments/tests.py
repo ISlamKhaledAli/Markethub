@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -83,6 +84,7 @@ class PaymentFlowTests(TestCase):
     def test_failed_payment_keeps_order_pending(self):
         r = self._checkout()
         order_id = r.json()[0]['id']
+        stock_before = self.product.stock
 
         self.client.post('/api/payments/create-intent/', {'order_id': order_id}, format='json')
         pay = Payment.objects.get(order_id=order_id)
@@ -96,6 +98,25 @@ class PaymentFlowTests(TestCase):
 
         order = Order.objects.get(id=order_id)
         self.assertEqual(order.status, 'pending')
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, stock_before)
+
+    def test_successful_payment_decrements_stock(self):
+        stock_before = self.product.stock
+        r = self._checkout()
+        order_id = r.json()[0]['id']
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, stock_before)
+
+        self.client.post('/api/payments/create-intent/', {'order_id': order_id}, format='json')
+        pay = Payment.objects.get(order_id=order_id)
+        self.client.post(
+            '/api/payments/verify/',
+            {'payment_id': pay.id, 'client_secret': pay.client_secret, 'simulate_outcome': 'succeeded'},
+            format='json',
+        )
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, stock_before - 2)
 
     def test_duplicate_intent_blocked_after_success(self):
         r = self._checkout()
@@ -224,3 +245,75 @@ class PromoApiTests(TestCase):
         pid = r.json()['data']['id']
         r2 = self.client.patch(f'/api/promos/{pid}/', {'is_active': False}, format='json')
         self.assertEqual(r2.status_code, status.HTTP_200_OK)
+
+
+@override_settings(
+    PAYMENT_PROVIDER='stripe',
+    STRIPE_SECRET_KEY='sk_test_fake',
+    FRONTEND_URL='http://localhost:4200',
+)
+class StripeCheckoutTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.seller_user, self.profile, self.product = _make_catalog()
+        self.buyer = User.objects.create_user(
+            email='stripe_buyer@test.com',
+            password='pw123456',
+            role='customer',
+            is_verified=True,
+        )
+        self.cart, _ = Cart.objects.get_or_create(user=self.buyer)
+        CartItem.objects.create(cart=self.cart, product=self.product, quantity=1)
+
+    @patch('payments.providers.stripe.stripe.checkout.Session.create')
+    def test_create_intent_returns_checkout_url(self, mock_create):
+        session = MagicMock()
+        session.id = 'cs_test_123'
+        session.url = 'https://checkout.stripe.com/c/pay/cs_test_123'
+        mock_create.return_value = session
+
+        self.client.force_authenticate(self.buyer)
+        r = self.client.post(
+            '/api/orders/checkout/',
+            {'shipping_address': '1 St', 'contact_phone': '+1'},
+            format='json',
+        )
+        order_id = r.json()[0]['id']
+
+        r2 = self.client.post('/api/payments/create-intent/', {'order_id': order_id}, format='json')
+        self.assertEqual(r2.status_code, status.HTTP_201_CREATED)
+        data = r2.json()['data']
+        self.assertEqual(data['provider'], 'stripe')
+        self.assertEqual(data['checkout_url'], session.url)
+        self.assertEqual(data['transaction_id'], session.id)
+
+    @patch('payments.providers.stripe.stripe.checkout.Session.retrieve')
+    @patch('payments.providers.stripe.stripe.checkout.Session.create')
+    def test_verify_stripe_session_succeeds(self, mock_create, mock_retrieve):
+        created = MagicMock()
+        created.id = 'cs_test_verify'
+        created.url = 'https://checkout.stripe.com/c/pay/cs_test_verify'
+        mock_create.return_value = created
+
+        session = MagicMock()
+        session.payment_status = 'paid'
+        session.status = 'complete'
+        mock_retrieve.return_value = session
+
+        self.client.force_authenticate(self.buyer)
+        r = self.client.post(
+            '/api/orders/checkout/',
+            {'shipping_address': '1 St', 'contact_phone': '+1'},
+            format='json',
+        )
+        order_id = r.json()[0]['id']
+        self.client.post('/api/payments/create-intent/', {'order_id': order_id}, format='json')
+        pay = Payment.objects.get(order_id=order_id)
+
+        r3 = self.client.post(
+            '/api/payments/verify/',
+            {'payment_id': pay.id, 'session_id': pay.transaction_id},
+            format='json',
+        )
+        self.assertEqual(r3.status_code, status.HTTP_200_OK)
+        self.assertEqual(r3.json()['data']['status'], Payment.STATUS_SUCCEEDED)

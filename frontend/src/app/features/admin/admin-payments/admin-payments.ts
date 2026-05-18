@@ -8,9 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { PaymentRecord, PaymentStatus, PaymentProvider } from '../../../core/models/payment.model';
 import { PaymentService } from '../../../core/services/payment.service';
@@ -29,9 +27,7 @@ import { UiService } from '../../../core/services/ui.service';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
     MatPaginatorModule,
-    MatTooltipModule,
   ],
   templateUrl: './admin-payments.html',
   styleUrl: './admin-payments.scss',

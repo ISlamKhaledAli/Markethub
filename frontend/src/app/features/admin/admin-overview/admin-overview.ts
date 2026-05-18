@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -44,10 +44,10 @@ export class AdminOverviewComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     forkJoin({
-      users: this.adminApi.listUsers(),
-      orders: this.ordersService.getSellerOrders(),
-      payments: this.paymentService.getHistory(),
-      promos: this.promoService.list(),
+      users: this.adminApi.listUsers().pipe(catchError(() => of([]))),
+      orders: this.ordersService.getSellerOrders().pipe(catchError(() => of([]))),
+      payments: this.paymentService.getHistory().pipe(catchError(() => of([]))),
+      promos: this.promoService.list().pipe(catchError(() => of([]))),
     }).subscribe({
       next: ({ users, orders, payments, promos }) => {
         this.userCount.set(users.length);

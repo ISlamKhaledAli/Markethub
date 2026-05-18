@@ -41,6 +41,7 @@ class Payment(models.Model):
     currency = models.CharField(max_length=8, default='usd')
     transaction_id = models.CharField(max_length=196, unique=True, null=True, blank=True)
     client_secret = models.CharField(max_length=512, blank=True)
+    checkout_url = models.URLField(max_length=1024, blank=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

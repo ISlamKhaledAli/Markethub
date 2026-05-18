@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 
 from payments.models import Payment
@@ -21,6 +22,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             'currency',
             'transaction_id',
             'client_secret',
+            'checkout_url',
             'paid_at',
             'created_at',
             'updated_at',
@@ -38,18 +40,36 @@ class PaymentSerializer(serializers.ModelSerializer):
         return ''
 
 
+class PaymentHistorySerializer(PaymentSerializer):
+    class Meta(PaymentSerializer.Meta):
+        fields = [f for f in PaymentSerializer.Meta.fields if f != 'client_secret']
+
+
 class CreateIntentSerializer(serializers.Serializer):
     order_id = serializers.IntegerField(min_value=1)
 
 
 class VerifyPaymentSerializer(serializers.Serializer):
     payment_id = serializers.IntegerField(min_value=1)
-    client_secret = serializers.CharField(max_length=512)
+    client_secret = serializers.CharField(max_length=512, required=False, allow_blank=True)
+    session_id = serializers.CharField(max_length=256, required=False, allow_blank=True)
     simulate_outcome = serializers.ChoiceField(
         choices=['succeeded', 'failed', 'processing', 'pending', 'random'],
         required=False,
         allow_null=True,
     )
+
+    def validate(self, attrs):
+        if not attrs.get('client_secret') and not attrs.get('session_id'):
+            raise serializers.ValidationError(
+                'Either client_secret or session_id is required.',
+            )
+        provider = (getattr(settings, 'PAYMENT_PROVIDER', None) or 'mock').lower()
+        if attrs.get('simulate_outcome') and not settings.DEBUG and provider != 'mock':
+            raise serializers.ValidationError(
+                {'simulate_outcome': 'Simulation is only available with the mock payment provider.'}
+            )
+        return attrs
 
 
 class SimulateWebhookSerializer(serializers.Serializer):

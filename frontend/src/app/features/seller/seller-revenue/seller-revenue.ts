@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -60,8 +60,8 @@ export class SellerRevenueComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     forkJoin({
-      orders: this.ordersService.getSellerOrders(),
-      payments: this.paymentService.getHistory(),
+      orders: this.ordersService.getSellerOrders().pipe(catchError(() => of([]))),
+      payments: this.paymentService.getHistory().pipe(catchError(() => of([]))),
     }).subscribe({
       next: ({ orders, payments }) => {
         this.orders.set(orders);

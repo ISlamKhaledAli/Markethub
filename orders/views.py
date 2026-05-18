@@ -6,10 +6,10 @@ from rest_framework.response import Response
 
 from products.models import Product
 from promos.models import PromoCode
+from orders.fulfillment import new_checkout_group_id
 from promos.services import (
     allocate_order_totals,
     cart_subtotal,
-    increment_promo_usage,
     line_total_for_item,
     validate_promo_for_subtotal,
 )
@@ -24,7 +24,10 @@ class CartView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        cart, created = Cart.objects.get_or_create(user=self.request.user)
+        cart, _ = Cart.objects.prefetch_related(
+            'items__product',
+            'applied_promo',
+        ).get_or_create(user=self.request.user)
         return cart
 
 class CartItemCreateUpdateView(views.APIView):
@@ -142,6 +145,20 @@ class CheckoutView(views.APIView):
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
+        product_ids = {item.product_id for item in items_qs}
+        locked_products = {
+            p.id: p
+            for p in Product.objects.select_for_update().filter(id__in=product_ids)
+        }
+        for item in items_qs:
+            product = locked_products.get(item.product_id)
+            if not product or product.stock < item.quantity:
+                return Response(
+                    {"error": f"Not enough stock for {item.product.name}."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        checkout_group_id = new_checkout_group_id()
         orders_created = []
 
         for seller, items_list in seller_items.items():
@@ -152,7 +169,9 @@ class CheckoutView(views.APIView):
                 total_amount=order_total,
                 shipping_address=shipping_address,
                 contact_phone=contact_phone,
-                status='pending'
+                status='pending',
+                checkout_group_id=checkout_group_id,
+                applied_promo=promo,
             )
 
             for item in items_list:
@@ -162,15 +181,10 @@ class CheckoutView(views.APIView):
                     product=item.product,
                     product_name=item.product.name,
                     price=price,
-                    quantity=item.quantity
+                    quantity=item.quantity,
                 )
-                item.product.stock -= item.quantity
-                item.product.save()
 
             orders_created.append(order)
-
-        if promo:
-            increment_promo_usage(promo)
 
         cart.applied_promo = None
         cart.save(update_fields=['applied_promo', 'updated_at'])
@@ -184,18 +198,23 @@ class BuyerOrdersListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Order.objects.filter(buyer=self.request.user).order_by('-created_at')
+        return (
+            Order.objects.filter(buyer=self.request.user)
+            .select_related('seller', 'buyer')
+            .prefetch_related('items__product')
+            .order_by('-created_at')
+        )
 
 class SellerOrdersListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Admin sees ALL orders
+        base = Order.objects.select_related('seller', 'buyer').prefetch_related('items__product')
         if self.request.user.role == 'admin':
-            return Order.objects.all().order_by('-created_at')
+            return base.order_by('-created_at')
         if self.request.user.role == 'seller' and hasattr(self.request.user, 'seller_profile'):
-            return Order.objects.filter(seller=self.request.user.seller_profile).order_by('-created_at')
+            return base.filter(seller=self.request.user.seller_profile).order_by('-created_at')
         return Order.objects.none()
 
 class SellerOrderStatusUpdateView(views.APIView):

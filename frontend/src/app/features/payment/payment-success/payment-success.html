@@ -1,0 +1,16 @@
+<div class="max-w-lg mx-auto px-4 py-16 text-center">
+  @if (loading()) {
+    <mat-spinner diameter="48" class="mx-auto"></mat-spinner>
+    <p class="mt-6 text-slate-600">{{ message() }}</p>
+  } @else {
+    <mat-icon class="!w-16 !h-16 !text-5xl" [class.text-emerald-500]="success()" [class.text-amber-500]="!success()">
+      {{ success() ? 'check_circle' : 'info' }}
+    </mat-icon>
+    <h1 class="text-2xl font-bold text-slate-900 mt-4">{{ success() ? 'Thank you!' : 'Payment status' }}</h1>
+    <p class="text-slate-600 mt-2">{{ message() }}</p>
+    <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+      <a mat-flat-button color="primary" routerLink="/my-orders">View my orders</a>
+      <a mat-stroked-button routerLink="/">Continue shopping</a>
+    </div>
+  }
+</div>

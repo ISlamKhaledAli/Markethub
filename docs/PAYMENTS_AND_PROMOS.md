@@ -8,7 +8,10 @@ Add to your `.env` (see `.env.example`):
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PAYMENT_PROVIDER` | `mock` or `stripe` (Stripe not implemented yet) | `mock` |
+| `PAYMENT_PROVIDER` | `mock` or `stripe` | `mock` |
+| `STRIPE_SECRET_KEY` | Stripe secret key (test/live) | — |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (frontend optional) | — |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret from Stripe CLI or Dashboard | — |
 | `PAYMENT_WEBHOOK_SECRET` | Shared secret for `POST /api/payments/simulate-webhook/` (and future real webhooks) | `dev-webhook-secret-change-me` |
 
 Existing variables (`SECRET_KEY`, `DATABASE_URL`, `FRONTEND_URL`, email, Redis, etc.) are unchanged.
@@ -68,11 +71,14 @@ Errors:
 
 Order/cart endpoints under `/api/orders/` remain **raw DRF JSON** (unchanged).
 
-## Switching to Stripe later
+## Stripe Checkout
 
-1. Implement `StripePaymentProvider` in `payments/providers/stripe.py` using the same `BasePaymentProvider` methods.
-2. Point `PAYMENT_PROVIDER=stripe` and add Stripe keys to `.env`.
-3. Keep **`Payment`**, URLs, and request bodies stable so the frontend does not need breaking changes.
+1. Set `PAYMENT_PROVIDER=stripe` and add Stripe keys to `.env` (see `docs/STRIPE_SETUP.md`).
+2. `POST /api/payments/create-intent/` returns `checkout_url` — redirect the customer there.
+3. Success/cancel URLs return to `/payment/success` and `/payment/cancel`.
+4. Webhooks: `POST /api/payments/stripe-webhook/` with Stripe signature verification.
+
+Mock provider remains available for local testing without Stripe.
 
 ## Tests
 

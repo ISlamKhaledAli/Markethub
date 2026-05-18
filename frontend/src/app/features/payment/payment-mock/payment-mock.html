@@ -1,0 +1,15 @@
+<div class="max-w-md mx-auto px-4 py-12">
+  <mat-card class="p-6">
+    <h1 class="text-xl font-bold text-slate-900 mb-2">Mock payment</h1>
+    <p class="text-slate-600 text-sm mb-6">Development provider — choose an outcome to simulate.</p>
+    @if (processing()) {
+      <div class="flex justify-center py-4"><mat-spinner diameter="36"></mat-spinner></div>
+    } @else {
+      <div class="flex flex-col gap-3">
+        <button mat-flat-button color="primary" (click)="confirm('succeeded')">Simulate success</button>
+        <button mat-stroked-button color="warn" (click)="confirm('failed')">Simulate failure</button>
+        <a mat-button routerLink="/my-orders">Back to orders</a>
+      </div>
+    }
+  </mat-card>
+</div>

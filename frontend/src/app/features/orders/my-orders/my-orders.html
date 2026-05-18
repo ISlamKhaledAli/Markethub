@@ -34,6 +34,15 @@
                 }">
             {{ order.status }}
           </span>
+          <button
+            *ngIf="order.status === 'pending'"
+            mat-flat-button
+            color="primary"
+            (click)="payOrder(order)"
+            [disabled]="payingOrderId === order.id"
+          >
+            {{ payingOrderId === order.id ? 'Starting…' : 'Pay now' }}
+          </button>
         </div>
       </div>
       

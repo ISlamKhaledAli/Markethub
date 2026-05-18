@@ -29,16 +29,13 @@ export class App implements OnInit {
   }
 
   private checkApiHealth(): void {
+    if (environment.production) {
+      return;
+    }
     this.http.get(`${environment.apiUrl}/products/products/?page_size=1`).subscribe({
-      next: () => console.log('✅ API connection healthy'),
-      error: (err) => {
-        console.warn('⚠️ API unreachable:', err.message);
+      error: () => {
         this.uiService.showInfo('API connection issue. Some features may not work.');
-      }
+      },
     });
-  }
-
-  showComingSoon(feature: string): void {
-    this.uiService.showComingSoon(feature);
   }
 }

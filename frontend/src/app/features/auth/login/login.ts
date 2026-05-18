@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth';
+import { safeReturnUrl } from '../../../core/utils/safe-return-url';
 
 @Component({
   selector: 'app-login',
@@ -51,7 +52,7 @@ export class LoginComponent {
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (res) => {
         this.isLoading.set(false);
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+        const returnUrl = safeReturnUrl(this.route.snapshot.queryParams['returnUrl']);
         if (returnUrl) {
           this.router.navigateByUrl(returnUrl);
           return;

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from django.contrib.auth.password_validation import validate_password
@@ -50,7 +51,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
 
-        # 2. store_name logic based on role
+        # 2. Only customer/seller may self-register
+        if role not in ('customer', 'seller'):
+            raise serializers.ValidationError(
+                {"role": "Invalid role. Choose customer or seller."}
+            )
+
+        # 3. store_name logic based on role
         if role == 'seller':
             if not store_name or store_name.strip() == "":
                 raise serializers.ValidationError({"store_name": "Store name is required for seller accounts."})
@@ -65,12 +72,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         store_name = validated_data.pop('store_name', None)
         role = validated_data.get('role', 'customer')
         
+        auto_verify = getattr(settings, 'REGISTER_AUTO_VERIFY', False)
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             phone=validated_data.get('phone'),
             role=role,
-            is_verified=True # Auto-verify for easy testing
+            is_verified=auto_verify,
         )
 
         # 3. Create SellerProfile only for sellers
@@ -100,4 +108,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = (
+            'id',
+            'email',
+            'phone',
+            'role',
+            'is_active',
+            'is_verified',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
