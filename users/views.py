@@ -16,23 +16,9 @@ from .serializers import (
 )
 from .permissions import IsAdmin
 from .tasks import send_verification_email
+from .mixins import ApiResponseMixin
 
 User = get_user_model()
-
-class ApiResponseMixin:
-    def success_response(self, data=None, message="Success", status_code=status.HTTP_200_OK):
-        return Response({
-            "status": "success",
-            "message": message,
-            "data": data or {}
-        }, status=status_code)
-
-    def error_response(self, message="Error", data=None, status_code=status.HTTP_400_BAD_REQUEST):
-        return Response({
-            "status": "error",
-            "message": message,
-            "data": data or {}
-        }, status=status_code)
 
 class RegisterView(ApiResponseMixin, generics.CreateAPIView):
     queryset = User.objects.all()
